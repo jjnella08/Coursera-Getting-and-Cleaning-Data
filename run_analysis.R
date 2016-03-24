@@ -22,8 +22,15 @@ library(data.table)
 activityLabels <- read.table("./UCI HAR Dataset/activity_labels.txt", quote = "\"")
 features <- read.table("./UCI HAR Dataset/features.txt", quote = "\"")
 
+## make sure these columns are character fields
+activityLabels[,2] <- as.character(activityLabels[,2])
+features[,2] <- as.character(features[,2])  
+
 ## grab only the rows with titles for mean and standard deviation
 subFeatures <- grep(".*mean.*|.*std.*", features[,2])
+
+## get the values from the rows to be used as column names
+FeatureLAbels <- features[subFeatures,2]
 
 ## Read the training and test data into data frames - X has the results, 
 ## grab only the data where the columns are for mean and Standard deviation
@@ -31,7 +38,7 @@ XTrain <- read.table("UCI HAR Dataset/train/X_train.txt")[subFeatures]
 XTest <- read.table("UCI HAR Dataset/test/X_test.txt")[subFeatures]
 
 ## Read the training and test data into data frames
-## Y has the labels, Subject has the subject
+## Y has the labels, Subject has the subjects
 YTrain <- read.table("./UCI HAR Dataset/train/y_train.txt", quote = "\"")
 YTest <- read.table("./UCI HAR Dataset/test/y_test.txt", quote = "\"")
 SbjtTrain <- read.table("./UCI HAR Dataset/train/subject_train.txt", quote = "\"")
@@ -39,6 +46,22 @@ SbjtTest <- read.table("./UCI HAR Dataset/test/subject_test.txt", quote = "\"")
 
 ## Joing the results, labels, and subjects into a single data frame for training data
 Train <- cbind(SbjtTrain, YTrain, XTrain)
+colnames(Train) <- c("Subject","Activity",FeatureLAbels)
 
 ## Joing the results, labels, and subjects into a single data frame for test data
 Test <- cbind(SbjtTest, YTest, XTest)
+colnames(Test) <- c("Subject","Activity",FeatureLAbels)
+
+## merge both tables
+TrainTest <- rbind(Train, Test)
+
+## Change the Subject and Activity values to Charater values to be used in the melt function
+TrainTest$Activity <- factor(TrainTest$Activity, levels = activityLabels[,1], labels = activityLabels[,2])
+TrainTest$Subject <- as.factor(TrainTest$Subject)
+
+TrainTestMelt <- melt(TrainTest, id=c("Subject","Activity"))
+dcast(TrainTestMelt, Subject + Activity ~ variable, fun=mean)
+
+## Create a second independent tidy data set with the average of each 
+## variable for each activity and each subject.
+write.table(TrainTestMean, "TidyMeans.txt", row.names = FALSE, quote = FALSE)
