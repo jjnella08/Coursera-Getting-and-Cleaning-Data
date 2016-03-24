@@ -64,4 +64,4 @@ dcast(TrainTestMelt, Subject + Activity ~ variable, fun=mean)
 
 ## Create a second independent tidy data set with the average of each 
 ## variable for each activity and each subject.
-write.table(TrainTestMean, "TidyMeans.txt", row.names = FALSE, quote = FALSE)
+write.table(TrainTestMean, "tidy.txt", row.names = FALSE, quote = FALSE)
